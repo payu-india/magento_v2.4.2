@@ -2,6 +2,9 @@
   "name": "payuindia/payu",
   "description": "PayU Payment Module for Magento 2.4.x",
   "type": "magento2-module",
+  "require-dev": {
+    "payu-india/magento_v2.4.2": "dev-main"
+  },
   "require": {
     "php": "~5.5.0|~5.6.0|~7.0.0|^8.1",
     "magento/module-store": "100.0.0",
