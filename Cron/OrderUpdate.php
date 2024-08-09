@@ -52,18 +52,29 @@ class OrderUpdate
             $paymentVerData=$this->paymentVerify($order,$txnid);
             $paymentResponse=json_decode($paymentVerData,true);
 
-            $this->logger->info($paymentVerData);
-            $this->logger->info($paymentResponse['transaction_details'][$txnid]['status']);
+            $this->logger->info('order id ' . json_encode($order->getIncrementId()));
+            $this->logger->info('Response from payu');
+            $this->logger->info('response '.json_encode($paymentVerData));
 
             if($order->getState()=='pending_payment' && $paymentResponse['transaction_details'][$txnid]['status']=='success'){
                 $this->payuHelper->updateOrderFromResponse($order,$paymentResponse['transaction_details'][$txnid]);
                 $payment = $order->getPayment();
                 $this->postProcessing($order, $payment, $paymentResponse['transaction_details'][$txnid]);
-            }elseif ($order->getState()=='pending_payment'){
+ 
+ 
+            } elseif ($order->getState() == 'pending_payment' && $paymentResponse['transaction_details'][$txnid]['status'] == 'pending') {
+ 
+                $order->setStatus('pending_payment');
+                $order->setState('pending_payment');
+                $order->addStatusHistoryComment('set pending status from payu');
+                $order->save();
+                
+            }elseif ($order->getState()=='pending_payment' && $paymentResponse['transaction_details'][$txnid]['status'] == 'failure'){
+                
                 $order->setStatus('canceled');
                 $order->setState('canceled');
+                $order->addStatusHistoryComment('set failure status from payu');
                 $order->save();
-
             }else{
                 $this->logger->info('order up-to-date');
             }
@@ -114,8 +125,7 @@ class OrderUpdate
 		$writer = new \Zend_Log_Writer_Stream(BP . '/var/log/ordercron.log'); 
 		$logger = new \Zend_Log(); 
 		$logger->addWriter($writer); 
-		$logger->info('Custom message');
-		$logger->info('response '.json_encode($response));
+		
 		
 		try {				
 			$orderemail = $this->payuHelper->getConfigData("orderemail");
@@ -132,13 +142,11 @@ class OrderUpdate
 				
 				If (isset($response['additional_charges'])) {
 					$payment->setAdditionalInformation('Additional Charges', $response['additional_charges']);		
-					$payment->registerCaptureNotification(($response['amt']+$response['additional_charges']),true);
-					$order->save();
-				}
-				else {
-					$payment->registerCaptureNotification($response['amt'],true)->save();
+					
+					
 				}
 				
+				$order->save();
 				if($this->payuHelper->getConfigData('debuglog')==true)
 					$this->logger->debug($response);					
 				
