@@ -39,11 +39,11 @@ class Redirect extends \PayUIndia\Payu\Controller\PayuAbstract implements CsrfAw
 		
         $html = $this->getPaymentMethod()->buildCheckoutRequest();
 		
-		if(isset($html['error']) && $html['error']!="") {
+		if(isset($html['error'])) {
 			$this->_logger->error("PayU Error-".json_encode($html)); 	
-			$this->messageManager->addError("<strong>Error:</strong> ".$html['error']);
+		    return $this->resultJsonFactory->create()->setData(['error' => $html['error']]);
+
 		}
-	
 		return $this->resultJsonFactory->create()->setData(['html' => $html['data']]);
     }
 
