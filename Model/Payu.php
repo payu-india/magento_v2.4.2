@@ -151,7 +151,7 @@ class Payu extends \Magento\Payment\Model\Method\AbstractMethod {
 		
 		if (!$quote->hasItems())
         {
-			return $params['error'] = 'Empty cart...';
+			return ['error' => 'Empty cart...'];
 		}
 		
 		$billing_address = $quote->getBillingAddress();
@@ -364,6 +364,7 @@ class Payu extends \Magento\Payment\Model\Method\AbstractMethod {
 		$logger = new \Zend_Log(); 
 		$logger->addWriter($writer); 
 		$logger->info('Custom message');
+		$logger->info('order id ' . json_encode($order->getIncrementId()));
 		$logger->info('response '.json_encode($response));
 		try {				
 			$orderemail = $this->getConfigData("orderemail");
