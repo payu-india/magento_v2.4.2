@@ -147,9 +147,12 @@ class Payu extends AbstractHelper
                 $fname = $this->customerSession->getCustomer()->getFirstname() ?? '';
                 $lname = $this->customerSession->getCustomer()->getLastname() ?? '';
             }else{
-                $email = 'guestuser'.uniqid().time().'@gmail.com';
-                $fname = 'fname';
-                $lname = 'lname';
+                $quote->setCheckoutMethod(\Magento\Checkout\Model\Type\Onepage::METHOD_GUEST);
+                $email=$this->session->getGuestCustomerEmail();
+                $quote->getBillingAddress()->setEmail($email);
+                if (!$email) {
+                    throw new LocalizedException(__('Please provide an email address in the shipping information.111'));
+                }
                 $quote->setCustomerIsGuest(true);
                 
             }
