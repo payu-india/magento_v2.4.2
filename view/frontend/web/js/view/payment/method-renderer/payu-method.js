@@ -21,7 +21,11 @@ define([
           cache: false,
           processData: false, // Don't process the files
           contentType: false, // Set content type to false as jQuery will tell the server its a query string request
+          showLoader: true,
           success: function (data) {
+            if (data["error"]) {
+              alert(data["error"]);
+            }
             $("#payuloader", parent.document).html(data["html"]);
           },
           error: function (xhr, ajaxOptions, thrownError) {
