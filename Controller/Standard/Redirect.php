@@ -36,7 +36,19 @@ class Redirect extends \PayUIndia\Payu\Controller\PayuAbstract implements CsrfAw
                     $this->getCheckoutHelper()->getUrl('checkout')
             );
         }
-		
+        $quote = $this->getQuote();
+        $email = $this->getRequest()->getParam('email');
+       
+        if (!$this->getCustomerSession()->isLoggedIn()) {
+            if (!$email) {
+                throw new LocalizedException(__('Please provide an email address in the shipping information.'));
+            }
+            $quote->setCheckoutMethod(\Magento\Checkout\Model\Type\Onepage::METHOD_GUEST);
+            $quote->setCustomerIsGuest(true);
+            $quote->setCustomerEmail($email);
+            $quote->getBillingAddress()->setEmail($email);
+            $quote->save();
+        }
         $html = $this->getPaymentMethod()->buildCheckoutRequest();
 		
 		if(isset($html['error'])) {
