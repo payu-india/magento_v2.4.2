@@ -4,7 +4,4 @@
 	<type name="Magento\Framework\App\Request\CsrfValidator">
         <plugin name="csrf_validator_skip" type="PayUIndia\Payu\Plugin\CsrfValidatorSkip" />
     </type>
-    <type name="Magento\Customer\Model\AccountManagement">
-        <plugin name="session_for_guest_Plugin" type="PayUIndia\Payu\Plugin\SessionForGuest" sortOrder="10" disabled="false"  />
-    </type>
 </config>
