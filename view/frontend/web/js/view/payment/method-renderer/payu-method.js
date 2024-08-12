@@ -2,9 +2,11 @@
 /*global define*/
 define([
   "Magento_Checkout/js/view/payment/default",
+  "Magento_Checkout/js/model/quote",
+  "Magento_Customer/js/model/customer",
   "jquery",
   "mage/url",
-], function (Component, setPaymentMethod) {
+], function (Component, quote, customer, setPaymentMethod) {
   "use strict";
 
   return Component.extend({
@@ -13,9 +15,16 @@ define([
     },
 
     preparePayment: function () {
+      var email;
+
+      if (!customer.isLoggedIn()) {
+        email = quote.guestEmail;
+      }
+      console.log(email);
       jQuery(function ($) {
         $.ajax({
-          url: window.checkoutConfig.payment.payu.redirectUrl,
+          url:
+            window.checkoutConfig.payment.payu.redirectUrl + "?email=" + email,
           type: "get",
           dataType: "json",
           cache: false,
