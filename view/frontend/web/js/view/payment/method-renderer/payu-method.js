@@ -23,13 +23,13 @@ define([
       console.log(email);
       jQuery(function ($) {
         $.ajax({
-          url:
-            window.checkoutConfig.payment.payu.redirectUrl + "?email=" + email,
-          type: "get",
+          url: window.checkoutConfig.payment.payu.redirectUrl,
+          type: "POST",
           dataType: "json",
           cache: false,
-          processData: false, // Don't process the files
-          contentType: false, // Set content type to false as jQuery will tell the server its a query string request
+          data: {
+            email: email,
+          },
           showLoader: true,
           success: function (data) {
             if (data["error"]) {
