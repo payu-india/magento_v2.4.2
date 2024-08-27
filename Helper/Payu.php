@@ -194,11 +194,15 @@ class Payu extends AbstractHelper
         return $methods;
     }
 
-    public function getConfigData($value)
+    public function getConfigData($value, $storeId = null)
     {
+        if ($storeId === null) {
+            $storeId = $this->_storeManager->getStore()->getId();
+        }
         return $this->scopeConfig->getValue(
             'payment/payu/' . $value,
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+            $storeId
         );
     }
 
