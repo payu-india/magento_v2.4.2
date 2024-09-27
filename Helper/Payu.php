@@ -237,7 +237,7 @@ class Payu extends AbstractHelper
 
     public function setDiscount($order,$customDiscount,$discountDescription)
     {
-        $total=$order->getBaseSubtotal();
+        $total=$order->getGrandTotal();
         $order->setDiscountAmount($customDiscount);
         $order->setBaseDiscountAmount($customDiscount);
         $order->setBaseGrandTotal($order->getBaseGrandTotal()-$customDiscount);
