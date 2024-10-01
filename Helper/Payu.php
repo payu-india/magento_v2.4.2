@@ -49,7 +49,7 @@ class Payu extends AbstractHelper
     ) {
         $this->session = $session;
         $this->quote = $quote;
-        $this->order =  $order;
+        $this->order = $order;
         $this->quoteManagement = $quoteManagement;
         $this->cartManagement = $cartManagement;
         $this->customerSession = $customerSession;
@@ -86,34 +86,34 @@ class Payu extends AbstractHelper
     {
         $quote = $this->session->getQuote();
 
-        if($this->scopeConfig->getValue('payment/payu/paymentaction')=='expresscheckout'){
+        if ($this->scopeConfig->getValue('payment/payu/paymentaction') == 'expresscheckout') {
             $store = $this->_storeManager->getStore();
             $websiteId = $this->_storeManager->getStore()->getWebsiteId();
-            $customer=$this->customerFactory->create();
+            $customer = $this->customerFactory->create();
             $customer->setWebsiteId($websiteId);
 
-            if($this->customerSession->isLoggedIn()) {
+            if ($this->customerSession->isLoggedIn()) {
                 $email = $this->customerSession->getCustomer()->getEmail();
                 $fname = $this->customerSession->getCustomer()->getFirstname() ?? '';
                 $lname = $this->customerSession->getCustomer()->getLastname() ?? '';
-            }else{
-                $email = 'guestuser'.uniqid().time().'@gmail.com';
+            } else {
+                $email = 'guestuser' . uniqid() . time() . '@gmail.com';
                 $fname = 'fname';
                 $lname = 'lname';
             }
             $customer->loadByEmail($email);
-            if(!$customer->getEntityId()){
+            if (!$customer->getEntityId()) {
                 $quote->setCustomerEmail($email);
                 $quote->setCustomerIsGuest(true);
-            }else{
-                $customer= $this->customerRepository->getById($customer->getEntityId());
+            } else {
+                $customer = $this->customerRepository->getById($customer->getEntityId());
                 $quote->assignCustomer($customer);
             }
-            $address=$quote->getBillingAddress()->getData();
+            $address = $quote->getBillingAddress()->getData();
 
-            $address  = [
-                'firstname'    => 'guest',
-                'lastname'     => 'user',
+            $address = [
+                'firstname' => 'guest',
+                'lastname' => 'user',
                 'street' => 'street',
                 'city' => 'city',
                 'country_id' => 'US',
@@ -131,7 +131,7 @@ class Payu extends AbstractHelper
 
             $activeCarriers = $this->getShippingMethods();
 
-            $shippingAddress=$quote->getShippingAddress();
+            $shippingAddress = $quote->getShippingAddress();
             $shippingAddress->setCollectShippingRates(true)
                 ->collectShippingRates()
                 ->setShippingMethod($activeCarriers[0]['value'][0]['value']);
@@ -141,8 +141,8 @@ class Payu extends AbstractHelper
             $quote->save();
             $quote->getPayment()->importData(['method' => 'payu']);
             $quote->collectTotals()->save();
-        }else{
-            if($this->customerSession->isLoggedIn()) {
+        } else {
+            if ($this->customerSession->isLoggedIn()) {
                 $email = $this->customerSession->getCustomer()->getEmail();
                 $fname = $this->customerSession->getCustomer()->getFirstname() ?? '';
                 $lname = $this->customerSession->getCustomer()->getLastname() ?? '';
@@ -165,18 +165,19 @@ class Payu extends AbstractHelper
         $m2order->setTxnid($txnId)->save();
         $increment_id = $m2order->getRealOrderId();
         $m2order->setCanSendNewEmailFlag(false)->save();
-        if($m2order->getEntityId()){
-            $result['order_id']= $m2order->getRealOrderId();
-        }else{
-            $result=['error'=>1,'msg'=>'erro message'];
+        if ($m2order->getEntityId()) {
+            $result['order_id'] = $m2order->getRealOrderId();
+        } else {
+            $result = ['error' => 1, 'msg' => 'erro message'];
         }
         return $result;
     }
 
-    public function getShippingMethods() {
+    public function getShippingMethods()
+    {
         $activeCarriers = $this->shipconfig->getActiveCarriers();
 
-        foreach($activeCarriers as $carrierCode => $carrierModel) {
+        foreach ($activeCarriers as $carrierCode => $carrierModel) {
             $options = array();
 
             if ($carrierMethods = $carrierModel->getAllowedMethods()) {
@@ -185,7 +186,7 @@ class Payu extends AbstractHelper
                     $options[] = array('value' => $code, 'label' => $method);
                 }
                 $carrierTitle = $this->scopeConfig
-                    ->getValue('carriers/'.$carrierCode.'/title');
+                    ->getValue('carriers/' . $carrierCode . '/title');
             }
 
             $methods[] = array('value' => $options, 'label' => $carrierTitle);
@@ -206,79 +207,90 @@ class Payu extends AbstractHelper
         );
     }
 
-    public function updateOrderFromResponse($order,$params)
+    public function updateOrderFromResponse($order, $params)
     {
-        if(isset($params['offer']) && isset($params['offer_availed']) && isset($params['transaction_offer']))
-        {
+        if (isset($params['offer']) && isset($params['offer_availed']) && isset($params['transaction_offer'])) {
             $offerArr = $params['transaction_offer'];
             if (!is_array($offerArr)) {
                 $offerArr = json_decode($offerArr, true);
             }
-            if(isset($offerArr['offer_data'])){
-                $des=$offerArr['offer_data'];
-                $description=$des[0];
-                $discountDescription="Title - ".$description['offer_title']." | Offer Key - ".$description['offer_key']." |  Type - ".$description['offer_type'];
-                $customDiscount=$offerArr['discount_data']['total_discount'];
-                if($customDiscount > 0){
-                    $this->setDiscount($order,$customDiscount,$discountDescription);
+            if (isset($offerArr['offer_data'])) {
+                $des = $offerArr['offer_data'];
+                $description = $des[0];
+                $discountDescription = "Title - " . $description['offer_title'] . " | Offer Key - " . $description['offer_key'] . " |  Type - " . $description['offer_type'];
+                $customDiscount = $offerArr['discount_data']['total_discount'];
+                if ($customDiscount > 0) {
+                    $this->setDiscount($order, $customDiscount, $discountDescription);
                 }
             }
 
-        }else{
-            if(isset($params['disc']) && $params['disc']>0)
-            {
-                $discountDescription='Payu Offer';
-                $customDiscount=$params['disc'];
-                $this->setDiscount($order,$customDiscount,$discountDescription);
+        } else {
+            if (isset($params['disc']) && $params['disc'] > 0) {
+                $discountDescription = 'Payu Offer';
+                $customDiscount = $params['disc'];
+                $this->setDiscount($order, $customDiscount, $discountDescription);
             }
         }
 
     }
 
-    public function setDiscount($order,$customDiscount,$discountDescription)
+    public function setDiscount($order, $customDiscount, $discountDescription)
     {
-        $total=$order->getGrandTotal();
-        $order->setDiscountAmount($customDiscount);
-        $order->setBaseDiscountAmount($customDiscount);
-        $order->setBaseGrandTotal($order->getBaseGrandTotal()-$customDiscount);
-        $order->setGrandTotal($order->getGrandTotal()-$customDiscount);
-        $order->setDiscountDescription($discountDescription);
+        $total = $order->getGrandTotal();
+        $existingDiscount = $order->getDiscountAmount();
+        $newDiscount = $existingDiscount - $customDiscount; // Adding the custom discount
+        $order->setDiscountAmount($newDiscount);
+        $order->setBaseDiscountAmount($newDiscount);
+        $order->setGrandTotal($order->getGrandTotal() - $customDiscount);
+        $order->setBaseGrandTotal($order->getBaseGrandTotal() - $customDiscount);
+        $order->setDiscountDescription($order->getDiscountDescription() . '|||payu :-' . $discountDescription);
         $shippingAddress = $order->getShippingAddress();
         if ($shippingAddress) {
             $shippingAddress->setDiscountAmount($customDiscount);
             $shippingAddress->setDiscountDescription($discountDescription);
             $shippingAddress->setBaseDiscountAmount($customDiscount);
         }
-        $orderBillingAddress = $order->getBillingAddress();
-        $orderBillingAddress->setDiscountAmount($customDiscount);
-        $orderBillingAddress->setDiscountDescription($discountDescription);
-        $orderBillingAddress->setBaseDiscountAmount($customDiscount);
+        // Apply discount to billing address if exists
+        $billingAddress = $order->getBillingAddress();
+        if ($billingAddress) {
+            $billingAddress->setDiscountAmount($customDiscount);
+            $billingAddress->setDiscountDescription($discountDescription);
+            $billingAddress->setBaseDiscountAmount($customDiscount);
+        }
 
         $order->setSubtotal((float) $order->getSubTotal());
         $order->setBaseSubtotal((float) $order->getBaseSubtotal());
-        $order->setGrandTotal((float)  $order->getGrandTotal());
+        $order->setGrandTotal((float) $order->getGrandTotal());
         $order->setBaseGrandTotal((float) $order->getBaseGrandTotal());
-        $order ->save();
-      
+        $order->addStatusHistoryComment('discount-' . $existingDiscount . 'payu discount-' . $customDiscount);
+        $order->save();
 
         $order->setBaseTotalInvoiced($order->getGrandTotal());
         $order->setTotalInvoiced($order->getGrandTotal());
-        $payment=$order->getpayment();
+
+        $payment = $order->getPayment();
         $payment->setBaseAmountPaid($order->getGrandTotal());
         $payment->setAmountPaid($order->getGrandTotal());
         $payment->setBaseAmountOrdered($order->getGrandTotal());
         $payment->setAmountOrdered($order->getGrandTotal());
         $payment->save();
-        foreach($order->getAllItems() as $item){
-            $rat=$item->getPriceInclTax()/$total;
-            $ratdisc=abs($customDiscount)*$rat;
-            $discountAmt=($item->getDiscountAmount()+$ratdisc) * $item->getQtyOrdered();
-            $base=($item->getBaseDiscountAmount()+$ratdisc) * $item->getQtyOrdered();
-            $item->setBaseDiscountAmount($base);
-            $item->setDiscountAmount($discountAmt);
+        $totalNew = 0;
+        foreach ($order->getAllItems() as $item) {
+            $totalNew = $totalNew + ($item->getPriceInclTax() * $item->getQtyOrdered());
+
+        }
+
+        // Distribute the discount proportionally among items
+        foreach ($order->getAllItems() as $item) {
+            $itemPriceInclTax = $item->getPriceInclTax();
+            $itemQty = $item->getQtyOrdered();
+            $discountRatio = $itemPriceInclTax / $totalNew;
+            $itemDiscountAmount = $discountRatio * abs($customDiscount) * $itemQty;
+            $item->setBaseDiscountAmount($item->getBaseDiscountAmount() + $itemDiscountAmount);
+            $item->setDiscountAmount($item->getDiscountAmount() + $itemDiscountAmount);
             $item->save();
         }
+
         $order->save();
     }
-
 }
