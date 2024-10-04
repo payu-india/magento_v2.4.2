@@ -275,20 +275,31 @@ class Payu extends AbstractHelper
         $payment->setAmountOrdered($order->getGrandTotal());
         $payment->save();
         $totalNew = 0;
+
+        $orderParent = [];
         foreach ($order->getAllItems() as $item) {
-            $totalNew = $totalNew + ($item->getPriceInclTax() * $item->getQtyOrdered());
-
+                $orderParent[$item->getItemId()] = $item;
         }
-
+        foreach ($order->getAllItems() as $item) {
+                if($item->getProductType() !="bundle" && $item->getProductType() !="soft") {
+                     if($item->getParentId() == null || ($orderParent[$item->getParentId()]->getProductType() =="bundle" || $orderParent[$item->getParentId()]->getProductType() =="soft"))
+                         $totalNew=$totalNew+($item->getPriceInclTax()*$item->getQtyOrdered())-$item->getDiscountAmount();
+               }
+        }
+ 
         // Distribute the discount proportionally among items
         foreach ($order->getAllItems() as $item) {
-            $itemPriceInclTax = $item->getPriceInclTax();
-            $itemQty = $item->getQtyOrdered();
-            $discountRatio = $itemPriceInclTax / $totalNew;
-            $itemDiscountAmount = $discountRatio * abs($customDiscount) * $itemQty;
-            $item->setBaseDiscountAmount($item->getBaseDiscountAmount() + $itemDiscountAmount);
-            $item->setDiscountAmount($item->getDiscountAmount() + $itemDiscountAmount);
-            $item->save();
+             if($item->getProductType() !="bundle" && $item->getProductType() !="soft") {
+                     if($item->getParentId() == null || ($orderParent[$item->getParentId()]->getProductType() =="bundle" || $orderParent[$item->getParentId()]->getProductType() =="soft"))
+                     { 
+                        $itemPriceInclTax = ($item->getPriceInclTax() * $item->getQtyOrdered()) - $item->getDiscountAmount();
+                        $discountRatio = $itemPriceInclTax / $totalNew;
+                        $itemDiscountAmount = $discountRatio * abs($customDiscount);
+                        $item->setBaseDiscountAmount($item->getBaseDiscountAmount() + $itemDiscountAmount);
+                        $item->setDiscountAmount($item->getDiscountAmount() + $itemDiscountAmount);
+                        $item->save();
+                     }
+             }
         }
 
         $order->save();
