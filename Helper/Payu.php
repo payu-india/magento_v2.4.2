@@ -275,18 +275,14 @@ class Payu extends AbstractHelper
         $payment->setAmountOrdered($order->getGrandTotal());
         $payment->save();
         $totalNew = 0;
-
         $orderParent = [];
         foreach ($order->getAllItems() as $item) {
                 $orderParent[$item->getItemId()] = $item;
-        }
-        foreach ($order->getAllItems() as $item) {
                 if($item->getProductType() !="bundle" && $item->getProductType() !="soft") {
                      if($item->getParentId() == null || ($orderParent[$item->getParentId()]->getProductType() =="bundle" || $orderParent[$item->getParentId()]->getProductType() =="soft"))
                          $totalNew=$totalNew+($item->getPriceInclTax()*$item->getQtyOrdered())-$item->getDiscountAmount();
                }
         }
- 
         // Distribute the discount proportionally among items
         foreach ($order->getAllItems() as $item) {
              if($item->getProductType() !="bundle" && $item->getProductType() !="soft") {
