@@ -279,14 +279,14 @@ class Payu extends AbstractHelper
         foreach ($order->getAllItems() as $item) {
                 $orderParent[$item->getItemId()] = $item;
                 if($item->getProductType() !="bundle" && $item->getProductType() !="soft") {
-                     if($item->getParentId() == null || ($orderParent[$item->getParentId()]->getProductType() =="bundle" || $orderParent[$item->getParentId()]->getProductType() =="soft"))
+                     if($item->getParentItemId() == null || ($orderParent[$item->getParentItemId()]->getProductType() =="bundle" || $orderParent[$item->getParentItemId()]->getProductType() =="soft"))
                          $totalNew=$totalNew+($item->getPriceInclTax()*$item->getQtyOrdered())-$item->getDiscountAmount();
                }
         }
         // Distribute the discount proportionally among items
         foreach ($order->getAllItems() as $item) {
              if($item->getProductType() !="bundle" && $item->getProductType() !="soft") {
-                     if($item->getParentId() == null || ($orderParent[$item->getParentId()]->getProductType() =="bundle" || $orderParent[$item->getParentId()]->getProductType() =="soft"))
+                     if($item->getParentItemId() == null || ($orderParent[$item->getParentItemId()]->getProductType() =="bundle" || $orderParent[$item->getParentItemId()]->getProductType() =="soft"))
                      { 
                         $itemPriceInclTax = ($item->getPriceInclTax() * $item->getQtyOrdered()) - $item->getDiscountAmount();
                         $discountRatio = $itemPriceInclTax / $totalNew;
